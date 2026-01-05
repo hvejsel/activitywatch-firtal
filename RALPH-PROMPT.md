@@ -40,10 +40,10 @@ Work through these steps in order. Check off completed items by changing `[ ]` t
 - [x] 5.3 Hook into event insertion to detect objects on all watchers
 
 ### Phase 6: LLM Analysis Service
-- [ ] 6.1 Create `/aw-server/aw_server/taskmining/llm_service.py`
-- [ ] 6.2 Add Ollama provider (Qwen2.5-VL, LLaVA)
-- [ ] 6.3 Add Claude provider as fallback
-- [ ] 6.4 Add async queue for non-blocking analysis
+- [x] 6.1 Create `/aw-server/aw_server/taskmining/llm_service.py`
+- [x] 6.2 Add Ollama provider (Qwen2.5-VL, LLaVA)
+- [x] 6.3 Add Claude provider as fallback
+- [x] 6.4 Add async queue for non-blocking analysis
 
 ### Phase 7: Trainable Ontology
 - [ ] 7.1 Create `/aw-server/aw_server/taskmining/ontology.py`
