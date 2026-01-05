@@ -46,10 +46,10 @@ Work through these steps in order. Check off completed items by changing `[ ]` t
 - [x] 6.4 Add async queue for non-blocking analysis
 
 ### Phase 7: Trainable Ontology
-- [ ] 7.1 Create `/aw-server/aw_server/taskmining/ontology.py`
-- [ ] 7.2 Implement confirm/reject pattern learning
-- [ ] 7.3 Add pattern generalization (extract regex from confirmed matches)
-- [ ] 7.4 Add confidence scoring
+- [x] 7.1 Create `/aw-server/aw_server/taskmining/ontology.py`
+- [x] 7.2 Implement confirm/reject pattern learning
+- [x] 7.3 Add pattern generalization (extract regex from confirmed matches)
+- [x] 7.4 Add confidence scoring
 
 ### Phase 8: Object Training UI
 - [ ] 8.1 Create ObjectConfirmation component (confirm/reject/correct)
