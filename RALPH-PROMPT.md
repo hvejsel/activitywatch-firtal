@@ -59,8 +59,8 @@ Work through these steps in order. Check off completed items by changing `[ ]` t
 
 ### Phase 9: Process List Page
 - [x] 9.1 Create process list page (`/processes`)
-- [ ] 9.2 Show process cards with stats (runs, duration, variants)
-- [ ] 9.3 Add filtering and search
+- [x] 9.2 Show process cards with stats (runs, duration, variants)
+- [x] 9.3 Add filtering and search
 
 ### Phase 10: Process Detail Page
 - [x] 10.1 Create process detail page (`/processes/[id]`)

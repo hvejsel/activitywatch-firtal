@@ -166,3 +166,122 @@ export function getTimeRange(period: "today" | "week" | "month"): { start: strin
 
   return { start: start.toISOString(), end };
 }
+
+// Process Mining types
+export interface ProcessSummary {
+  id: string;
+  name: string;
+  processType: string;
+  instanceCount: number;
+  avgDuration: number;
+  variantCount: number;
+  firstSeen: string;
+  lastSeen: string;
+  linkedObjectTypes: string[];
+}
+
+export interface ProcessDetail {
+  id: string;
+  name: string;
+  processType: string;
+  description?: string;
+  steps: ProcessStep[];
+  variants: ProcessVariant[];
+  instances: ProcessInstance[];
+  linkedObjects: LinkedObject[];
+  stats: ProcessStats;
+}
+
+export interface ProcessStep {
+  id: string;
+  name: string;
+  action: string;
+  avgDuration: number;
+  frequency: number;
+  order: number;
+}
+
+export interface ProcessVariant {
+  id: string;
+  steps: string[];
+  frequency: number;
+  avgDuration: number;
+}
+
+export interface ProcessInstance {
+  id: string;
+  processId: string;
+  startTime: string;
+  endTime: string;
+  duration: number;
+  steps: string[];
+  status: "completed" | "in_progress" | "abandoned";
+  linkedObjects: string[];
+}
+
+export interface LinkedObject {
+  id: string;
+  objectType: string;
+  identifier: string;
+  frequency: number;
+}
+
+export interface ProcessStats {
+  totalDuration: number;
+  avgDuration: number;
+  minDuration: number;
+  maxDuration: number;
+  completionRate: number;
+}
+
+// Process Mining API Client Extension
+class ProcessMiningClient {
+  private baseUrl: string;
+
+  constructor(baseUrl: string = API_BASE) {
+    this.baseUrl = baseUrl;
+  }
+
+  private async fetch<T>(path: string, options?: RequestInit): Promise<T> {
+    const response = await fetch(`${this.baseUrl}${path}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`AW API Error: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  async getProcesses(): Promise<ProcessSummary[]> {
+    return this.fetch<ProcessSummary[]>("/taskmining/processes");
+  }
+
+  async getProcess(processId: string): Promise<ProcessDetail> {
+    return this.fetch<ProcessDetail>(`/taskmining/processes/${processId}`);
+  }
+
+  async getProcessInstances(processId: string): Promise<ProcessInstance[]> {
+    return this.fetch<ProcessInstance[]>(`/taskmining/processes/${processId}/instances`);
+  }
+
+  async triggerAnalysis(): Promise<{ status: string; message: string }> {
+    return this.fetch("/taskmining/analyze", { method: "POST" });
+  }
+
+  async getTaskMiningStatus(): Promise<{
+    lastAnalysis: string | null;
+    processCount: number;
+    instanceCount: number;
+    status: string;
+  }> {
+    return this.fetch("/taskmining/status");
+  }
+}
+
+export const processMiningClient = new ProcessMiningClient();
