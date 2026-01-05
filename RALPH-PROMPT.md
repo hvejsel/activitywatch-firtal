@@ -26,18 +26,18 @@ Work through these steps in order. Check off completed items by changing `[ ]` t
 - [x] 3.1 Create settings layout with sidebar navigation
 - [x] 3.2 LLM settings page (`/settings/llm`) - provider selection, model, API keys
 - [x] 3.3 Detection settings page (`/settings/detection`) - patterns, thresholds
-- [ ] 3.4 General settings page - privacy filters, intervals
+- [x] 3.4 General settings page - privacy filters, intervals
 
 ### Phase 4: Event Explorer
-- [ ] 4.1 Create EventList component with table
-- [ ] 4.2 Add screenshot viewer component
-- [ ] 4.3 Add filtering by bucket, date range, search
-- [ ] 4.4 Show detected objects on events
+- [x] 4.1 Create EventList component with table
+- [x] 4.2 Add screenshot viewer component
+- [x] 4.3 Add filtering by bucket, date range, search
+- [x] 4.4 Show detected objects on events
 
 ### Phase 5: Server-Side Object Detection
-- [ ] 5.1 Create `/aw-server/aw_server/taskmining/object_detector.py` - universal detector
-- [ ] 5.2 Add detection for window titles, URLs, OCR text
-- [ ] 5.3 Hook into event insertion to detect objects on all watchers
+- [x] 5.1 Create `/aw-server/aw_server/taskmining/object_detector.py` - universal detector
+- [x] 5.2 Add detection for window titles, URLs, OCR text
+- [x] 5.3 Hook into event insertion to detect objects on all watchers
 
 ### Phase 6: LLM Analysis Service
 - [ ] 6.1 Create `/aw-server/aw_server/taskmining/llm_service.py`
