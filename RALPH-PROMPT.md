@@ -52,10 +52,10 @@ Work through these steps in order. Check off completed items by changing `[ ]` t
 - [x] 7.4 Add confidence scoring
 
 ### Phase 8: Object Training UI
-- [ ] 8.1 Create ObjectConfirmation component (confirm/reject/correct)
+- [x] 8.1 Create ObjectConfirmation component (confirm/reject/correct)
 - [x] 8.2 Create training queue page (`/objects/training`)
-- [ ] 8.3 Add bulk review mode
-- [ ] 8.4 Add pattern editor for power users
+- [x] 8.3 Add bulk review mode
+- [x] 8.4 Add pattern editor for power users
 
 ### Phase 9: Process List Page
 - [x] 9.1 Create process list page (`/processes`)
