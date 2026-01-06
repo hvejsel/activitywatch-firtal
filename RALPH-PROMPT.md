@@ -65,22 +65,22 @@ Work through these steps in order. Check off completed items by changing `[ ]` t
 ### Phase 10: Process Detail Page
 - [x] 10.1 Create process detail page (`/processes/[id]`)
 - [x] 10.2 Add overview card (name, executions, duration)
-- [ ] 10.3 Add process flow graph (Cytoscape.js)
-- [ ] 10.4 Add steps table with variants
+- [x] 10.3 Add process flow graph (Cytoscape.js)
+- [x] 10.4 Add steps table with variants
 - [x] 10.5 Add linked objects section (products, orders, customers)
 - [x] 10.6 Add instances list with replay capability
 
 ### Phase 11: User Prompting
-- [ ] 11.1 Create `/aw-server/aw_server/taskmining/prompting.py`
-- [ ] 11.2 Implement ambiguity detection
-- [ ] 11.3 Create DecisionPrompt component in frontend
-- [ ] 11.4 Add prompt queue with toast notifications
+- [x] 11.1 Create `/aw-server/aw_server/taskmining/prompting.py`
+- [x] 11.2 Implement ambiguity detection
+- [x] 11.3 Create DecisionPrompt component in frontend
+- [x] 11.4 Add prompt queue with toast notifications
 
 ### Phase 12: Browser Extension Network Capture
-- [ ] 12.1 Add networkTracker.ts to `/aw-watcher-web-firtal/src/background/`
-- [ ] 12.2 Intercept fetch and XMLHttpRequest
-- [ ] 12.3 Extract business objects from API responses
-- [ ] 12.4 Create `api_call` event type
+- [x] 12.1 Add networkTracker.ts to `/aw-watcher-web-firtal/src/background/`
+- [x] 12.2 Intercept fetch and XMLHttpRequest
+- [x] 12.3 Extract business objects from API responses
+- [x] 12.4 Create `api_call` event type
 
 ## Current Progress
 
