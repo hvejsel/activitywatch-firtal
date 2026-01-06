@@ -26,20 +26,84 @@ Workflow/Process
 ### New Entities
 
 #### 1. Object
-An entity that can be attached to events, steps, or workflows.
+An entity that can be attached to events, steps, or workflows. Objects are **global** (not bucket-specific).
 
 ```python
 # aw-core/aw_core/models.py
 class Object(dict):
     id: str                    # Unique identifier (UUID)
-    name: str                  # Display name
-    type: str                  # Object type (e.g., "project", "task", "customer", "ticket")
-    data: Dict[str, Any]       # Custom metadata
+    name: str                  # Display name (e.g., "PO-2024-001234")
+    type: str                  # Object type (see E-commerce Object Types below)
+    data: Dict[str, Any]       # Custom metadata (e.g., supplier_id, total_amount)
     created: datetime
     updated: datetime
 ```
 
-#### 2. Step
+**E-commerce Object Types:**
+| Type | Description | Example Name |
+|------|-------------|--------------|
+| `purchase_order` | Purchase order | PO-2024-001234 |
+| `order` | Sales/customer order | ORD-2024-005678 |
+| `purchase_order_item` | Line item on PO | PO-2024-001234-LINE-01 |
+| `purchase_order_invoice` | Invoice for PO | INV-2024-009876 |
+| `purchase_order_invoice_item` | Line item on invoice | INV-2024-009876-LINE-01 |
+| `shipment` | Shipment/delivery | SHIP-2024-003456 |
+| `stock_movement` | Inventory movement | STK-2024-007890 |
+| `ledger_entry` | Accounting entry | LED-2024-002345 |
+| `task` | Work task | TASK-2024-004567 |
+| `supplier` | Supplier/vendor | SUP-ACME-CORP |
+| `product` | Product/SKU | PRD-SKU-12345 |
+
+#### 2. ObjectExtractionRule
+Rules for automatically identifying objects from event data.
+
+```python
+class ObjectExtractionRule(dict):
+    id: str                    # Rule identifier
+    name: str                  # Rule name (e.g., "Extract PO from window title")
+    object_type: str           # Target object type (e.g., "purchase_order")
+    source_fields: List[str]   # Event fields to search (e.g., ["title", "url"])
+    pattern: str               # Regex pattern with named groups
+    name_template: str         # Template for object name (e.g., "PO-{po_number}")
+    data_mapping: Dict[str, str]  # Map regex groups to object.data fields
+    enabled: bool
+    priority: int              # Higher priority rules match first
+```
+
+**Example Extraction Rules:**
+```python
+# Extract Purchase Order from window title like "Purchase Order PO-2024-001234 - ERP System"
+ObjectExtractionRule(
+    name="PO from window title",
+    object_type="purchase_order",
+    source_fields=["title"],
+    pattern=r"(?:Purchase Order|PO)\s*(?P<po_number>PO-\d{4}-\d{6})",
+    name_template="{po_number}",
+    data_mapping={"po_number": "po_number"}
+)
+
+# Extract Order from URL like "https://erp.example.com/orders/ORD-2024-005678"
+ObjectExtractionRule(
+    name="Order from URL",
+    object_type="order",
+    source_fields=["url"],
+    pattern=r"/orders/(?P<order_id>ORD-\d{4}-\d{6})",
+    name_template="{order_id}",
+    data_mapping={"order_id": "order_id"}
+)
+
+# Extract Supplier from any field
+ObjectExtractionRule(
+    name="Supplier from title",
+    object_type="supplier",
+    source_fields=["title", "url"],
+    pattern=r"(?:Supplier|Vendor):\s*(?P<supplier_name>[A-Za-z0-9\s\-]+)",
+    name_template="SUP-{supplier_name}",
+    data_mapping={"supplier_name": "name"}
+)
+```
+
+#### 3. Step
 A grouping of related events representing a discrete action/activity.
 
 ```python
@@ -54,7 +118,7 @@ class Step(dict):
     data: Dict[str, Any]       # Step metadata (e.g., app pattern, category)
 ```
 
-#### 3. Workflow (Process)
+#### 4. Workflow (Process)
 A collection of steps representing a complete process pattern.
 
 ```python
@@ -78,7 +142,7 @@ class WorkflowOccurrence(dict):
     duration: float
 ```
 
-#### 4. Event Extension
+#### 5. Event Extension
 Extend existing Event model to support object attachments.
 
 ```python
@@ -95,7 +159,7 @@ class Event(dict):
 ### New Tables (SQLite / PostgreSQL)
 
 ```sql
--- Objects table
+-- Objects table (global, not bucket-specific)
 CREATE TABLE objects (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -103,6 +167,33 @@ CREATE TABLE objects (
     data JSON,
     created TIMESTAMP NOT NULL,
     updated TIMESTAMP NOT NULL
+);
+
+-- Object extraction rules (for automatic object identification)
+CREATE TABLE object_extraction_rules (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    object_type TEXT NOT NULL,
+    source_fields JSON NOT NULL,       -- ["title", "url"]
+    pattern TEXT NOT NULL,             -- Regex with named groups
+    name_template TEXT NOT NULL,       -- "{po_number}"
+    data_mapping JSON,                 -- {"po_number": "po_number"}
+    enabled BOOLEAN DEFAULT TRUE,
+    priority INTEGER DEFAULT 0,
+    created TIMESTAMP NOT NULL,
+    updated TIMESTAMP NOT NULL
+);
+
+-- Object types (user-definable)
+CREATE TABLE object_types (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,                -- "purchase_order"
+    display_name TEXT NOT NULL,        -- "Purchase Order"
+    description TEXT,
+    icon TEXT,                         -- Icon identifier
+    color TEXT,                        -- Hex color for UI
+    data_schema JSON,                  -- JSON schema for type-specific data fields
+    created TIMESTAMP NOT NULL
 );
 
 -- Steps table
@@ -181,17 +272,41 @@ CREATE TABLE occurrence_step_instances (
 
 ## New API Endpoints
 
+### Object Types API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/0/object-types` | List all object types |
+| POST | `/api/0/object-types` | Create new object type |
+| GET | `/api/0/object-types/<id>` | Get object type by ID |
+| PUT | `/api/0/object-types/<id>` | Update object type |
+| DELETE | `/api/0/object-types/<id>` | Delete object type |
+
+### Object Extraction Rules API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/0/extraction-rules` | List all extraction rules |
+| POST | `/api/0/extraction-rules` | Create new extraction rule |
+| GET | `/api/0/extraction-rules/<id>` | Get rule by ID |
+| PUT | `/api/0/extraction-rules/<id>` | Update rule |
+| DELETE | `/api/0/extraction-rules/<id>` | Delete rule |
+| POST | `/api/0/extraction-rules/<id>/test` | Test rule against sample events |
+| POST | `/api/0/extraction-rules/run` | Run all enabled rules on events (extract objects) |
+
 ### Objects API
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/0/objects` | List all objects (with filtering by type) |
-| POST | `/api/0/objects` | Create new object |
+| GET | `/api/0/objects` | List all objects (filter by type, name, date range) |
+| POST | `/api/0/objects` | Create new object (manual) |
 | GET | `/api/0/objects/<id>` | Get object by ID |
 | PUT | `/api/0/objects/<id>` | Update object |
 | DELETE | `/api/0/objects/<id>` | Delete object |
+| GET | `/api/0/objects/<id>/events` | Get all events linked to this object |
+| GET | `/api/0/objects/<id>/timeline` | Get object activity timeline |
 
-### Object Attachments API
+### Object Attachments API (Manual + Automatic)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -234,6 +349,129 @@ CREATE TABLE occurrence_step_instances (
 | POST | `/api/0/mining/group-events` | Group events into steps |
 | POST | `/api/0/mining/discover-workflows` | Discover workflow patterns |
 | POST | `/api/0/mining/match-workflow` | Find occurrences matching a workflow pattern |
+
+---
+
+## Object Extraction Implementation
+
+### Location: `aw-core/aw_mining/objects.py`
+
+Object identification supports **both automatic extraction AND manual tagging**.
+
+#### Automatic Object Extraction
+
+```python
+# aw-core/aw_mining/objects.py
+
+def extract_objects_from_events(
+    events: List[Event],
+    rules: List[ObjectExtractionRule],
+    create_if_missing: bool = True
+) -> List[Tuple[Event, List[Object]]]:
+    """
+    Run extraction rules against events to identify and link objects.
+
+    For each event:
+    1. Apply all enabled rules in priority order
+    2. For each match, either find existing object or create new one
+    3. Link object to event via event_objects table
+
+    Returns list of (event, extracted_objects) tuples.
+    """
+    pass
+
+def apply_extraction_rule(
+    event: Event,
+    rule: ObjectExtractionRule
+) -> Optional[Object]:
+    """
+    Apply a single extraction rule to an event.
+
+    1. Concatenate values from source_fields
+    2. Apply regex pattern
+    3. If match, construct object name from template
+    4. Return Object with mapped data fields
+    """
+    pass
+
+def find_or_create_object(
+    object_type: str,
+    name: str,
+    data: Dict[str, Any]
+) -> Object:
+    """
+    Find existing object by type+name, or create new one.
+    Objects are deduplicated by (type, name) combination.
+    """
+    pass
+```
+
+#### Manual Object Tagging
+
+```python
+def attach_object_to_event(
+    event_id: int,
+    bucket_id: str,
+    object_id: str
+) -> None:
+    """Manually attach an object to an event."""
+    pass
+
+def detach_object_from_event(
+    event_id: int,
+    bucket_id: str,
+    object_id: str
+) -> None:
+    """Remove object attachment from event."""
+    pass
+
+def create_object_manual(
+    object_type: str,
+    name: str,
+    data: Dict[str, Any]
+) -> Object:
+    """Manually create a new object (not from extraction)."""
+    pass
+```
+
+#### Object Extraction Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                     OBJECT EXTRACTION FLOW                          │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  Events arrive                                                      │
+│       ↓                                                             │
+│  ┌─────────────────────────────────────────────────────────┐       │
+│  │ Run Extraction Rules (by priority)                       │       │
+│  │                                                          │       │
+│  │  Rule 1: "PO from title"     → Match "PO-2024-001234"   │       │
+│  │  Rule 2: "Order from URL"    → Match "ORD-2024-005678"  │       │
+│  │  Rule 3: "Supplier from any" → Match "ACME Corp"        │       │
+│  └─────────────────────────────────────────────────────────┘       │
+│       ↓                                                             │
+│  ┌─────────────────────────────────────────────────────────┐       │
+│  │ Find or Create Objects                                   │       │
+│  │                                                          │       │
+│  │  Object exists?                                          │       │
+│  │    YES → Use existing object                            │       │
+│  │    NO  → Create new object                              │       │
+│  └─────────────────────────────────────────────────────────┘       │
+│       ↓                                                             │
+│  ┌─────────────────────────────────────────────────────────┐       │
+│  │ Link Objects to Event                                    │       │
+│  │                                                          │       │
+│  │  event_objects: (event_id, bucket_id, object_id)        │       │
+│  └─────────────────────────────────────────────────────────┘       │
+│       ↓                                                             │
+│  User can also manually:                                            │
+│    • Attach additional objects                                      │
+│    • Remove incorrect attachments                                   │
+│    • Create new objects                                             │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
