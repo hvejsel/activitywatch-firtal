@@ -343,85 +343,252 @@ get_objects_by_event(event)
 
 ---
 
-## WebUI Components
+## WebUI Components (PMTk-Inspired)
 
-### New Views
-
-#### 1. Process Mining Dashboard (`/mining`)
-**File:** `aw-webui/src/views/ProcessMining.vue`
-
-- Pattern discovery interface
-- Discovered patterns list with:
-  - Pattern sequence visualization
-  - Frequency/support metrics
-  - "Save as Workflow" action
-- Event grouping controls
-- Workflow creation from patterns
-
-#### 2. Workflows View (`/workflows`)
-**File:** `aw-webui/src/views/Workflows.vue`
-
-- List of saved workflows
-- For each workflow:
-  - Name, description, pattern visualization
-  - Occurrence count and total duration
-  - Object attachments
-- Actions: View details, edit, delete, measure
-
-#### 3. Workflow Detail View (`/workflows/:id`)
-**File:** `aw-webui/src/views/WorkflowDetail.vue`
-
-Hierarchical drill-down interface:
+### Navigation Structure
 
 ```
-Workflow: "Code Review Process"
-├── Objects: [Project: MyApp, Sprint: 23]
-├── Pattern: VSCode → Chrome (PR) → Slack → VSCode
-├── Statistics:
-│   ├── Occurrences: 47
-│   ├── Avg Duration: 25 min
-│   └── Total Time: 19.5 hours
-│
-└── Occurrences:
-    ├── [2024-01-06 10:30] (32 min)
-    │   ├── Step 1: Open IDE (8 min)
-    │   │   ├── Event: VSCode - project.ts [10:30-10:35]
-    │   │   ├── Event: VSCode - test.ts [10:35-10:38]
-    │   │   └── Objects: [File: project.ts]
-    │   ├── Step 2: Review PR (15 min)
-    │   │   └── Events: ...
-    │   └── Step 3: Discuss (9 min)
-    │       └── Events: ...
-    │
-    ├── [2024-01-05 14:20] (28 min)
-    │   └── ...
+Process Discovery
+├── Variant Explorer     # Discover and compare process variants
+├── Process Map          # Interactive flow diagram
+└── Process Model        # Saved/defined process models
+
+Visual Analytics
+├── Performance View     # Timeline bottleneck analysis
+├── Calendar View        # Activity calendar heatmap
+├── Transition Matrix    # Activity transition frequencies
+└── (existing views)     # Timeline, Activity, etc.
+
+Objects
+├── Objects List         # All objects with filtering
+└── Object Detail        # Object-centric activity view
 ```
 
-#### 4. Objects View (`/objects`)
+### Process Discovery Views
+
+#### 1. Variant Explorer (`/process-discovery/variants`)
+**File:** `aw-webui/src/views/VariantExplorer.vue`
+
+PMTk-style variant list showing discovered process patterns:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ VARIANT EXPLORER                          ▽ Filter Log  ⚙️ Config  │
+├─────────────────────────────────────────────────────────────────────┤
+│ ☑ 7 variants selected                                    Legend     │
+├─────────────────────────────────────────────────────────────────────┤
+│ ☑ 56,482 Cases  │ VSCode → Chrome → Terminal → VSCode │  ● VSCode  │
+│   38.44% Log    │ [green]  [blue]   [gray]    [green] │  ● Chrome  │
+├─────────────────────────────────────────────────────────────────────┤
+│ ☑ 46,371 Cases  │ VSCode → Slack                      │  ● Terminal│
+│   31.55% Log    │ [green]  [purple]                   │  ● Slack   │
+├─────────────────────────────────────────────────────────────────────┤
+│ ☐ 20,385 Cases  │ Chrome → VSCode                     │  ● Email   │
+│   13.87% Log    │ [blue]   [green]                    │            │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+Features:
+- Horizontal colored boxes for each activity in sequence
+- Case count and percentage of total log
+- Multi-select variants for comparison
+- Legend with activity colors (by app/category)
+- Click variant to drill down to occurrences
+- Filter by time range, min cases, activity contains
+- "Save as Process Model" action for selected variants
+
+#### 2. Process Map (`/process-discovery/map`)
+**File:** `aw-webui/src/views/ProcessMap.vue`
+
+Interactive flow diagram showing activity transitions:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ PROCESS MAP                               ▶ Play  ▽ Filter  ⚙️     │
+├─────────────────────────────────────────────────────────────────────┤
+│                                           │ Configuration          │
+│              ┌─────────┐                  │                        │
+│      150,370→│ VSCode  │                  │ % Activities ━━━━● 90  │
+│              │ 150,370 │                  │                        │
+│              └────┬────┘                  │ % Paths      ━━━● 30   │
+│           103,396 │                       │                        │
+│              ┌────▼────┐                  │ ☐ Apply Dependency     │
+│      46,952→ │ Chrome  │ ←79,757          │   Threshold            │
+│              │ 103,987 │                  │                        │
+│              └────┬────┘                  │ Arc Decoration         │
+│            18,649 │                       │ ● Frequency            │
+│              ┌────▼────┐                  │ ○ Performance          │
+│              │Terminal │                  │ ○ Case Percentage      │
+│              │ 72,611  │                  │                        │
+│              └─────────┘                  │ Node Color             │
+│                                           │ [App ▼]                │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+Features:
+- Directed graph with activity nodes
+- Edge thickness = transition frequency
+- Edge labels = frequency count or duration
+- Node size = activity frequency
+- Configurable % Activities (filter low-frequency)
+- Configurable % Paths (filter low-frequency transitions)
+- Arc decoration: frequency, performance (duration), or case %
+- Node coloring by app, category, or custom
+- Pan/zoom, click node to filter
+- Animation: replay process flow
+
+#### 3. Process Model (`/process-discovery/models`)
+**File:** `aw-webui/src/views/ProcessModel.vue`
+
+Saved process definitions with monitoring:
+
+- List of saved process models
+- For each model: name, pattern, occurrence stats
+- Compare actual vs expected process flow
+- Conformance checking (how well do cases follow the model?)
+- Click to view detailed occurrences
+
+### Visual Analytics Views
+
+#### 4. Performance View (`/analytics/performance`)
+**File:** `aw-webui/src/views/PerformanceView.vue`
+
+Timeline spaghetti diagram for bottleneck analysis:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ PERFORMANCE VIEW                     Case ID: session_12345        │
+├─────────────────────────────────────────────────────────────────────┤
+│ Jan 6, 10:30 AM    Jan 6, 11:15 AM    Jan 6, 2:30 PM               │
+│ ┌──────────┐       ┌──────────┐       ┌──────────┐                 │
+│ │  VSCode  │───────│  Chrome  │───────│  VSCode  │    ← Selected   │
+│ └──────────┘  45m  └──────────┘  3h   └──────────┘      case       │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│ VSCode     ══════╗     ╔════════════════╗    ╔══════               │
+│            ══════╬═════╬════════════════╬════╬══════               │
+│ Chrome           ╠═════╣                ╠════╣        ← Spaghetti  │
+│            ══════╬═════╬════════════════╬════╬══════     diagram   │
+│ Terminal   ══════╝     ╚════════════════╝    ╚══════               │
+│                                                                     │
+│ ──────────┬──────────┬──────────┬──────────┬──────────             │
+│        Feb 2018   Apr 2018   Jun 2018   Aug 2018                   │
+├─────────────────────────────────────────────────────────────────────┤
+│ Activity 1: VSCode           Activity 2: Chrome                    │
+│ Duration between: Min 1h 31m ━━━━━━━━━━━━━━━━● Max 5h 22m         │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+Features:
+- X-axis = time, Y-axis = activities
+- Lines connect sequential activities per case/session
+- Color-coded by duration (green=fast, red=slow)
+- Highlight individual case path on hover/click
+- Duration distribution between activity pairs
+- Identify bottlenecks (where lines bunch up)
+- Filter by date range, duration threshold
+
+#### 5. Transition Matrix (`/analytics/transitions`)
+**File:** `aw-webui/src/views/TransitionMatrix.vue`
+
+Heatmap of activity-to-activity transitions:
+
+```
+         │ VSCode │ Chrome │ Terminal │ Slack │
+─────────┼────────┼────────┼──────────┼───────┤
+VSCode   │   -    │  42%   │   28%    │  15%  │
+Chrome   │  35%   │   -    │   12%    │   8%  │
+Terminal │  45%   │  18%   │    -     │   2%  │
+Slack    │  22%   │  31%   │    5%    │   -   │
+```
+
+Features:
+- Row = source activity, Column = target activity
+- Cell value = transition frequency or probability
+- Color intensity = frequency
+- Click cell to see specific transitions
+
+### Object Views
+
+#### 6. Objects View (`/objects`)
 **File:** `aw-webui/src/views/Objects.vue`
 
 - Object type filter (projects, tasks, customers, etc.)
 - Object list with attached event/step/workflow counts
-- Object detail showing all related activity
+- Search/filter by name, type, metadata
 
-#### 5. Object Detail View (`/objects/:id`)
+#### 7. Object Detail View (`/objects/:id`)
 **File:** `aw-webui/src/views/ObjectDetail.vue`
 
-- Timeline of all activity related to object
-- Breakdown by workflow/step/event
+- Timeline of all activity related to this object
+- Process variants involving this object
 - Duration statistics
+- Related objects
+
+### Drill-Down Views
+
+#### 8. Case Explorer (`/cases/:id`)
+**File:** `aw-webui/src/views/CaseExplorer.vue`
+
+Detailed view of a single process occurrence:
+
+```
+Case: session_2024-01-06_10:30
+Duration: 2h 15m
+Objects: [Project: MyApp] [Sprint: 23]
+
+Timeline:
+├── 10:30 VSCode - main.ts (5 min)
+│   └── Objects: [File: main.ts]
+├── 10:35 VSCode - test.ts (8 min)
+├── 10:43 Chrome - GitHub PR #123 (15 min)
+│   └── Objects: [PR: #123]
+├── 10:58 Slack - #dev-team (12 min)
+└── 11:10 VSCode - main.ts (25 min)
+```
 
 ### New Components
 
-#### Pattern Visualizer
-**File:** `aw-webui/src/components/PatternVisualizer.vue`
-- Flow diagram showing sequence of activities
-- Node colors by app/category
-- Edge annotations for transitions
+#### VariantRow
+**File:** `aw-webui/src/components/VariantRow.vue`
+- Horizontal sequence of colored activity boxes
+- Case count badge
+- Percentage bar
+- Checkbox for selection
+
+#### ProcessGraph
+**File:** `aw-webui/src/components/ProcessGraph.vue`
+- D3.js or vis.js based directed graph
+- Draggable nodes
+- Zoomable/pannable canvas
+- Edge thickness/color based on metrics
+- Node tooltips with statistics
+
+#### PerformanceSpaghetti
+**File:** `aw-webui/src/components/PerformanceSpaghetti.vue`
+- SVG-based spaghetti diagram
+- Horizontal time axis
+- Activity swimlanes
+- Curved paths connecting activities
+- Color gradient by duration
+- Hover to highlight single case
+
+#### TransitionHeatmap
+**File:** `aw-webui/src/components/TransitionHeatmap.vue`
+- Grid-based heatmap
+- Color scale legend
+- Row/column sorting
+- Click to drill down
+
+#### ActivityLegend
+**File:** `aw-webui/src/components/ActivityLegend.vue`
+- Colored dots with activity names
+- Toggle visibility
+- Filter by clicking
 
 #### Hierarchical Event Tree
 **File:** `aw-webui/src/components/HierarchicalEventTree.vue`
-- Collapsible tree: Workflow → Steps → Events
+- Collapsible tree: Process → Steps → Events
 - Duration at each level
 - Object badges
 - Click to expand/drill-down
@@ -432,12 +599,6 @@ Workflow: "Code Review Process"
 - Quick-add object button
 - Attached objects list with remove option
 - Works for events, steps, and workflows
-
-#### Occurrence Timeline
-**File:** `aw-webui/src/components/OccurrenceTimeline.vue`
-- Visual timeline of workflow occurrences
-- Stacked bar chart showing step breakdown
-- Hover for details
 
 ### New Stores
 
@@ -537,46 +698,63 @@ interface ObjectsStore {
 - `aw-core/aw_query/functions.py`
 
 ### Phase 5: WebUI - Stores & API Client
-1. Create mining store
-2. Create workflows store
+1. Create mining store (patterns, variants, transitions)
+2. Create process models store (saved processes)
 3. Create objects store
 4. Extend API client with new endpoints
 
 **New files:**
 - `aw-webui/src/stores/mining.ts`
-- `aw-webui/src/stores/workflows.ts`
+- `aw-webui/src/stores/processModels.ts`
 - `aw-webui/src/stores/objects.ts`
 
-### Phase 6: WebUI - Views
-1. Process Mining Dashboard
-2. Workflows list view
-3. Workflow detail view with drill-down
-4. Objects list and detail views
+### Phase 6: WebUI - Process Discovery Views
+1. Variant Explorer (PMTk-style variant list)
+2. Process Map (interactive flow diagram)
+3. Process Model (saved process definitions)
 
 **New files:**
-- `aw-webui/src/views/ProcessMining.vue`
-- `aw-webui/src/views/Workflows.vue`
-- `aw-webui/src/views/WorkflowDetail.vue`
+- `aw-webui/src/views/VariantExplorer.vue`
+- `aw-webui/src/views/ProcessMap.vue`
+- `aw-webui/src/views/ProcessModel.vue`
+
+### Phase 7: WebUI - Analytics Views
+1. Performance View (spaghetti diagram)
+2. Transition Matrix (heatmap)
+3. Case Explorer (drill-down)
+4. Objects views
+
+**New files:**
+- `aw-webui/src/views/PerformanceView.vue`
+- `aw-webui/src/views/TransitionMatrix.vue`
+- `aw-webui/src/views/CaseExplorer.vue`
 - `aw-webui/src/views/Objects.vue`
 - `aw-webui/src/views/ObjectDetail.vue`
 
-### Phase 7: WebUI - Components
-1. Pattern visualizer
-2. Hierarchical event tree
-3. Object attachment widget
-4. Occurrence timeline
+### Phase 8: WebUI - Components
+1. VariantRow (horizontal activity sequence)
+2. ProcessGraph (D3/vis.js flow diagram)
+3. PerformanceSpaghetti (timeline diagram)
+4. TransitionHeatmap
+5. ActivityLegend
+6. HierarchicalEventTree
+7. ObjectAttachment widget
 
 **New files:**
-- `aw-webui/src/components/PatternVisualizer.vue`
+- `aw-webui/src/components/VariantRow.vue`
+- `aw-webui/src/components/ProcessGraph.vue`
+- `aw-webui/src/components/PerformanceSpaghetti.vue`
+- `aw-webui/src/components/TransitionHeatmap.vue`
+- `aw-webui/src/components/ActivityLegend.vue`
 - `aw-webui/src/components/HierarchicalEventTree.vue`
 - `aw-webui/src/components/ObjectAttachment.vue`
-- `aw-webui/src/components/OccurrenceTimeline.vue`
 
-### Phase 8: Integration & Polish
-1. Add navigation menu items
-2. Cross-link between views
-3. Add object attachment to existing event views
-4. Performance optimization
+### Phase 9: Integration & Polish
+1. Add navigation menu items (Process Discovery, Visual Analytics, Objects)
+2. Cross-link between views (variant → cases, process map → case explorer)
+3. Filter log functionality (global time range, activity filters)
+4. Add object attachment to existing event views
+5. Performance optimization
 
 ---
 
