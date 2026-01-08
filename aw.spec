@@ -92,9 +92,9 @@ awi_location = Path("aw-watcher-input")
 aw_notify_location = Path("aw-notify")
 
 if platform.system() == "Darwin":
-    icon = aw_qt_location / "media/logo/logo.icns"
+    icon = Path("media/logo/logo.icns")
 else:
-    icon = aw_qt_location / "media/logo/logo.ico"
+    icon = Path("media/logo/logo.ico")
 
 skip_rust = False
 if not aw_server_rust_bin.exists():
@@ -211,9 +211,9 @@ if platform.system() == "Darwin":
         awa_coll,
         awi_coll,
         aw_notify_coll,
-        name="ActivityWatch.app",
+        name="Firtal Activity Watch.app",
         icon=icon,
-        bundle_identifier="net.activitywatch.ActivityWatch",
+        bundle_identifier="com.firtal.activitywatch",
         version=current_release.lstrip("v"),
         info_plist={
             "NSPrincipalClass": "NSApplication",

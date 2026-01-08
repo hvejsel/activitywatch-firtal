@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AW Intelligence - Activity Intelligence Platform",
-  description: "Palantir for E-commerce - Process Mining & Activity Analytics",
+  title: "Firtal Activity Watch",
+  description: "Activity tracking and time management for Firtal",
 };
 
 export default function RootLayout({
